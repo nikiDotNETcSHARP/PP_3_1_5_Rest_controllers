@@ -33,5 +33,5 @@ public class UserValidator implements Validator {
         if (optionalPerson.isPresent()) {
             errors.rejectValue("username", "", "Человек с таким именем пользователя существует");
         }
-     }
+    }
 }
