@@ -3,77 +3,74 @@ package ru.kata.spring.boot_security.demo.controllers;
 
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.ui.Model;
-import org.springframework.validation.BindingResult;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import ru.kata.spring.boot_security.demo.entities.Role;
 import ru.kata.spring.boot_security.demo.entities.User;
-import ru.kata.spring.boot_security.demo.services.AdditionalService;
+import ru.kata.spring.boot_security.demo.exception_handling.NoSuchUserException;
+import ru.kata.spring.boot_security.demo.services.RoleService;
 import ru.kata.spring.boot_security.demo.services.UserService;
-import ru.kata.spring.boot_security.demo.validators.UserValidator;
 
-import javax.validation.Valid;
-import java.security.Principal;
+import java.util.List;
+
 import org.slf4j.Logger;
 
 @RestController
-@RequestMapping("/users")
+@RequestMapping("/api")
 public class AdminController {
     private final UserService userService;
-    private final AdditionalService additionalService;
-    private final UserValidator userValidator;
+    private final RoleService roleService;
 
     private static final Logger logger = LoggerFactory.getLogger(AdminController.class);
 
     @Autowired
-    public AdminController(UserService userService,
-                           AdditionalService additionalService,
-                           UserValidator userValidator) {
+    public AdminController(UserService userService, RoleService roleService) {
         this.userService = userService;
-        this.additionalService = additionalService;
-        this.userValidator = userValidator;
+        this.roleService = roleService;
     }
 
     @GetMapping("/admin")
-    public String showAllUsers(Model model, Principal principal) {
+    public ResponseEntity<List<User>> showAllUsers() {
         logger.info("User viewing all users");
-        model.addAttribute("newUser", new User());
-        additionalService.createModelForView(model, principal);
-        model.addAttribute("activeTab", "usersTable");
-        return "adminPage";
+        return new ResponseEntity<>(userService.getAllUsers(), HttpStatus.OK);
+    }
+
+    @GetMapping("/admin/{id}")
+    public ResponseEntity<User> getUserById(@PathVariable("id") int id) {
+        logger.info("User viewing user by id");
+        User user = userService.showUserById(id);
+
+        if (user == null) {
+            throw new NoSuchUserException("There is no user with id " + id);
+        }
+        return new ResponseEntity<>(user, HttpStatus.OK);
     }
 
     @PostMapping("/admin")
-    public String addUser(@ModelAttribute("newUser") @Valid User user, BindingResult bindingResult,
-                          Principal principal, Model model) {
-        logger.info("User adding new user");
-        userValidator.validate(user, bindingResult);
-        if (bindingResult.hasErrors()) {
-            additionalService.createModelForView(model, principal);
-            model.addAttribute("activeTab", "addUser");
-            return "adminPage";
-        }
+    public ResponseEntity<HttpStatus> addUser(@RequestBody User user) {
+        logger.info("User creating new user");
         userService.saveUser(user);
-        return "redirect:/users/admin";
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 
-    @PatchMapping("/admin")
-    public String updateUser(@ModelAttribute("userIter") @Valid User user,
-                             BindingResult bindingResult,
-                             Model model, Principal principal) {
+    @PutMapping("/admin")
+    public ResponseEntity<HttpStatus> updateUser(@RequestBody User user) {
         logger.info("User updating user");
-        model.addAttribute("authUser", userService.findByUsername(principal.getName()));
-        if (bindingResult.hasErrors()) {
-            return "adminPage";
-        }
         userService.updateUser(user);
-        return "redirect:/users/admin";
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 
-    @DeleteMapping("/admin")
-    public String deleteUser(Model model, @RequestParam("id") int id) {
+    @DeleteMapping("/admin/{id}")
+    public ResponseEntity<HttpStatus> deleteUser(@PathVariable("id") int id) {
         logger.info("User deleting user");
-        model.addAttribute("user", userService.showUserById(id));
-        userService.deleteById(id);
-        return "redirect:/users/admin";
+        userService.removeUserById(id);
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
+
+    @GetMapping("/admin/roles")
+    public ResponseEntity<List<Role>> getAllRoles() {
+        logger.info("User viewing all roles");
+        return new ResponseEntity<>(roleService.getAllRoles(), HttpStatus.OK);
     }
 }
