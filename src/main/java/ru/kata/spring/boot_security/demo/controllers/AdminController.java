@@ -30,13 +30,13 @@ public class AdminController {
         this.roleService = roleService;
     }
 
-    @GetMapping("/admin")
+    @GetMapping("/users")
     public ResponseEntity<List<User>> showAllUsers() {
         logger.info("User viewing all users");
         return new ResponseEntity<>(userService.getAllUsers(), HttpStatus.OK);
     }
 
-    @GetMapping("/admin/{id}")
+    @GetMapping("/users/{id}")
     public ResponseEntity<User> getUserById(@PathVariable("id") int id) {
         logger.info("User viewing user by id");
         User user = userService.showUserById(id);
@@ -47,28 +47,28 @@ public class AdminController {
         return new ResponseEntity<>(user, HttpStatus.OK);
     }
 
-    @PostMapping("/admin")
+    @PostMapping("/users")
     public ResponseEntity<HttpStatus> addUser(@RequestBody User user) {
         logger.info("User creating new user");
         userService.saveUser(user);
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
-    @PutMapping("/admin")
+    @PutMapping("/users")
     public ResponseEntity<HttpStatus> updateUser(@RequestBody User user) {
         logger.info("User updating user");
         userService.updateUser(user);
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
-    @DeleteMapping("/admin/{id}")
+    @DeleteMapping("/users/{id}")
     public ResponseEntity<HttpStatus> deleteUser(@PathVariable("id") int id) {
         logger.info("User deleting user");
         userService.removeUserById(id);
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
-    @GetMapping("/admin/roles")
+    @GetMapping("/users/roles")
     public ResponseEntity<List<Role>> getAllRoles() {
         logger.info("User viewing all roles");
         return new ResponseEntity<>(roleService.getAllRoles(), HttpStatus.OK);
